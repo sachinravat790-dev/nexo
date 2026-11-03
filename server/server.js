@@ -17,7 +17,7 @@ app.get('/', (req, res) => {
   res.send('🚀 NEXO Backend API is Running! Go to <a href="/api/health">/api/health</a> for status.');
 });
 
-// Health Check API
+// Health Check API (Isko rehne dena hai)
 app.get('/api/health', (req, res) => {
   const dbStatus = mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected (Pending Setup)';
   res.status(200).json({
@@ -28,6 +28,11 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date().toISOString()
   });
 });
+
+// 👇 Iske theek neeche yeh 2 lines add karni hain:
+// Auth Routes (Day 2)
+const authRoutes = require('./routes/authRoutes');
+app.use('/api/auth', authRoutes);
 
 // Database Connection (Async - Will not crash server if disconnected)
 const connectDB = async () => {
