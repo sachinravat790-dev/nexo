@@ -34,6 +34,10 @@ app.get('/api/health', (req, res) => {
 const authRoutes = require('./routes/authRoutes');
 app.use('/api/auth', authRoutes);
 
+// Product Routes (Day 3)
+const productRoutes = require('./routes/productRoutes');
+app.use('/api/products', productRoutes);
+
 // Database Connection (Async - Will not crash server if disconnected)
 const connectDB = async () => {
   if (!process.env.MONGO_URI) {
