@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { Search, MapPin, ShoppingCart, Menu, GraduationCap, ChevronDown } from 'lucide-react';
+import { Search, MapPin, ShoppingCart, Menu, GraduationCap, ChevronDown, LogOut } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { useCart } from '../../context/CartContext'; // 👈 Cart Context import kiya
+import { useCart } from '../../context/CartContext';
+import { Link } from 'react-router-dom';
 
 export default function Navbar({ onSearch }) {
-  const { user } = useAuth();
-  const { totalItems, setIsCartOpen } = useCart(); // 👈 Live Cart count aur Drawer open karne ka function
+  const { user, logout } = useAuth();
+  const { totalItems, setIsCartOpen } = useCart();
   const [searchInput, setSearchInput] = useState('');
 
   const handleSearchSubmit = (e) => {
@@ -25,11 +26,11 @@ export default function Navbar({ onSearch }) {
         color: '#FFF'
       }}>
         {/* Brand Logo */}
-        <div style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', padding: '4px 8px' }}>
+        <Link to="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', padding: '4px 8px' }}>
           <span style={{ fontSize: '1.6rem', fontWeight: '900', letterSpacing: '-0.5px', color: '#FFF' }}>
             nexo<span style={{ color: '#FF9900' }}>.in</span>
           </span>
-        </div>
+        </Link>
 
         {/* Deliver To Location */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', padding: '4px 8px' }}>
@@ -42,7 +43,6 @@ export default function Navbar({ onSearch }) {
 
         {/* Amazon-Style Wide Search Bar */}
         <form onSubmit={handleSearchSubmit} style={{ flex: 1, display: 'flex', height: '40px', borderRadius: '4px', overflow: 'hidden' }}>
-          {/* Category Dropdown */}
           <div style={{
             backgroundColor: '#E6E6E6',
             color: '#333',
@@ -57,60 +57,93 @@ export default function Navbar({ onSearch }) {
             <span>All</span>
             <ChevronDown size={14} />
           </div>
-
           <input
             type="text"
             placeholder="Search NEXO.in for Laptops, boAt Headphones, Bags & Student Deals..."
             value={searchInput}
-            onChange={(e) => {
-              setSearchInput(e.target.value);
-              if (onSearch) onSearch(e.target.value);
-            }}
+            onChange={(e) => setSearchInput(e.target.value)}
             style={{
               flex: 1,
-              padding: '0 12px',
+              padding: '0 14px',
               border: 'none',
               outline: 'none',
               fontSize: '0.95rem'
             }}
           />
-
-          {/* Yellow Search Button */}
-          <button type="submit" style={{
-            backgroundColor: '#FEBD69',
-            width: '45px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            transition: 'background 0.2s'
-          }}
-          onMouseEnter={(e) => e.target.style.backgroundColor = '#F3A847'}
-          onMouseLeave={(e) => e.target.style.backgroundColor = '#FEBD69'}
+          <button
+            type="submit"
+            style={{
+              backgroundColor: '#FEBD69',
+              border: 'none',
+              width: '45px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer'
+            }}
           >
-            <Search size={20} color="#131921" />
+            <Search size={20} color="#333" />
           </button>
         </form>
 
-        {/* Student Special Program Flag */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '6px',
-          padding: '6px 12px',
-          border: '1px solid #FF9900',
-          borderRadius: '4px',
-          cursor: 'pointer',
-          background: 'rgba(255, 153, 0, 0.1)'
-        }}>
+        {/* Student Club Action Button */}
+        <Link
+          to="/student-verify"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '6px 12px',
+            borderRadius: '6px',
+            border: '1px solid #FF9900',
+            textDecoration: 'none',
+            background: 'rgba(255, 153, 0, 0.1)',
+            cursor: 'pointer'
+          }}
+        >
           <GraduationCap size={18} color="#FF9900" />
           <span style={{ fontSize: '0.8rem', fontWeight: '700', color: '#FF9900' }}>Student Club</span>
-        </div>
+        </Link>
 
-        {/* Sign In & Account */}
-        <div style={{ display: 'flex', flexDirection: 'column', cursor: 'pointer', padding: '4px 8px', lineHeight: '1.2' }}>
-          <span style={{ fontSize: '0.72rem', color: '#CCCCCC' }}>Hello, {user ? user.name.split(' ')[0] : 'Sign in'}</span>
-          <span style={{ fontSize: '0.85rem', fontWeight: '700' }}>Account & Lists ▾</span>
-        </div>
+        {/* Sign In & Account (Dynamic for New & Logged In Users) */}
+        {user ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Link
+              to="/student-verify"
+              style={{ display: 'flex', flexDirection: 'column', cursor: 'pointer', padding: '4px 6px', lineHeight: '1.2', color: '#FFF', textDecoration: 'none' }}
+            >
+              <span style={{ fontSize: '0.72rem', color: '#CCCCCC' }}>Hello, {user.name.split(' ')[0]}</span>
+              <span style={{ fontSize: '0.85rem', fontWeight: '700' }}>Account ▾</span>
+            </Link>
+            <button
+              onClick={logout}
+              style={{
+                backgroundColor: 'transparent',
+                border: '1px solid #475569',
+                color: '#CBD5E1',
+                borderRadius: '4px',
+                padding: '3px 8px',
+                fontSize: '0.72rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}
+              title="Sign Out"
+            >
+              <LogOut size={12} />
+              <span>Sign Out</span>
+            </button>
+          </div>
+        ) : (
+          <Link
+            to="/login"
+            style={{ display: 'flex', flexDirection: 'column', cursor: 'pointer', padding: '4px 8px', lineHeight: '1.2', color: '#FFF', textDecoration: 'none' }}
+          >
+            <span style={{ fontSize: '0.72rem', color: '#CCCCCC' }}>Hello, Sign in</span>
+            <span style={{ fontSize: '0.85rem', fontWeight: '700' }}>Account & Lists ▾</span>
+          </Link>
+        )}
 
         {/* Returns & Orders */}
         <div style={{ display: 'flex', flexDirection: 'column', cursor: 'pointer', padding: '4px 8px', lineHeight: '1.2' }}>
@@ -118,7 +151,7 @@ export default function Navbar({ onSearch }) {
           <span style={{ fontSize: '0.85rem', fontWeight: '700' }}>& Orders</span>
         </div>
 
-        {/* 🛒 Live Cart Icon with Click & Real Count */}
+        {/* Live Cart Icon */}
         <div
           onClick={() => setIsCartOpen(true)}
           style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', padding: '4px 8px' }}
@@ -150,21 +183,31 @@ export default function Navbar({ onSearch }) {
         color: '#FFF',
         fontSize: '0.85rem'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '700', cursor: 'pointer' }}>
             <Menu size={18} />
             <span>All</span>
           </div>
-          <span style={{ cursor: 'pointer', color: '#FF9900', fontWeight: 'bold' }}>🎓 Student Deals</span>
+          <span style={{ color: '#FF9900', fontWeight: '700', cursor: 'pointer' }}>⚡ Student Deals</span>
           <span style={{ cursor: 'pointer' }}>College Laptops</span>
           <span style={{ cursor: 'pointer' }}>Audio & Headphones</span>
           <span style={{ cursor: 'pointer' }}>Backpacks & Fashion</span>
           <span style={{ cursor: 'pointer' }}>Books & Notes</span>
         </div>
 
-        <div style={{ fontWeight: '700', color: '#FF9900', display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <span>🎉 NEXO Student Festival | Extra 25% Off</span>
-        </div>
+        {/* Student Banner Link */}
+        <Link
+          to="/student-verify"
+          style={{
+            fontSize: '0.8rem',
+            color: '#FFD814',
+            fontWeight: '700',
+            cursor: 'pointer',
+            textDecoration: 'none'
+          }}
+        >
+          🎉 NEXO Student Festival | Verify College ID &gt;
+        </Link>
       </div>
     </header>
   );

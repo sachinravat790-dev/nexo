@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 require('dotenv').config();
+const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -10,6 +11,8 @@ const PORT = process.env.PORT || 8000;
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+// Serve Uploaded Student ID Photos
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 
 // Root Route
@@ -37,6 +40,9 @@ app.use('/api/auth', authRoutes);
 // Product Routes (Day 3)
 const productRoutes = require('./routes/productRoutes');
 app.use('/api/products', productRoutes);
+// Student Verification Routes (Day 6)
+const studentRoutes = require('./routes/studentRoutes');
+app.use('/api/student', studentRoutes);
 
 // Database Connection (Async - Will not crash server if disconnected)
 const connectDB = async () => {

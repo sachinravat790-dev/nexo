@@ -1,4 +1,5 @@
 import { Globe } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export default function Footer() {
   const scrollToTop = () => {
@@ -32,8 +33,8 @@ export default function Footer() {
           maxWidth: '1200px',
           margin: '0 auto',
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-          gap: '36px'
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          gap: '30px'
         }}>
           {/* Column 1 */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -62,10 +63,21 @@ export default function Footer() {
             <span style={{ fontSize: '0.85rem', cursor: 'pointer', color: '#DDD' }}>College Campus Ambassador</span>
           </div>
 
-          {/* Column 4 */}
+          {/* Column 4 - Student Club & Admin Verification */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             <h4 style={{ color: '#FFF', fontSize: '1rem', fontWeight: '700', marginBottom: '4px' }}>NEXO Student Club</h4>
-            <span style={{ fontSize: '0.85rem', cursor: 'pointer', color: '#FF9900', fontWeight: 'bold' }}>🎓 Student ID Verification</span>
+            <Link
+              to="/student-verify"
+              style={{ fontSize: '0.85rem', cursor: 'pointer', color: '#FF9900', fontWeight: 'bold', textDecoration: 'none' }}
+            >
+              🎓 Student ID Verification
+            </Link>
+            <Link
+              to="/admin/verify-students"
+              style={{ fontSize: '0.85rem', cursor: 'pointer', color: '#38BDF8', fontWeight: '700', textDecoration: 'none' }}
+            >
+              🛡️ Admin Verification Queue
+            </Link>
             <span style={{ fontSize: '0.85rem', cursor: 'pointer', color: '#DDD' }}>100% Purchase Protection</span>
             <span style={{ fontSize: '0.85rem', cursor: 'pointer', color: '#DDD' }}>Returns & Refund Centre</span>
             <span style={{ fontSize: '0.85rem', cursor: 'pointer', color: '#DDD' }}>24x7 Student Helpdesk</span>
@@ -100,35 +112,31 @@ export default function Footer() {
             cursor: 'pointer'
           }}>
             <Globe size={14} />
-            <span>English</span>
+            <span>English - EN</span>
           </div>
 
           <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
             border: '1px solid #848688',
             borderRadius: '4px',
             padding: '6px 12px',
             fontSize: '0.8rem',
-            color: '#CCC'
+            color: '#CCC',
+            cursor: 'pointer'
           }}>
-            <span>🇮🇳 India</span>
+            🇮🇳 India
           </div>
         </div>
       </div>
 
-      {/* 3. Bottom Most Dark Strip (Copyright & Legal) */}
-      <div style={{ backgroundColor: '#131921', color: '#DDD', padding: '24px 20px', textAlign: 'center', fontSize: '0.75rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '18px', flexWrap: 'wrap', marginBottom: '10px' }}>
+      {/* 3. Bottom Black Copyright & Legal Strip */}
+      <div style={{ backgroundColor: '#131A22', padding: '24px 20px', textAlign: 'center', color: '#999', fontSize: '0.75rem', lineHeight: '1.8' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', flexWrap: 'wrap', marginBottom: '8px' }}>
           <span style={{ cursor: 'pointer' }}>Conditions of Use & Sale</span>
           <span style={{ cursor: 'pointer' }}>Privacy Notice</span>
-          <span style={{ cursor: 'pointer' }}>Student Discount Policy</span>
           <span style={{ cursor: 'pointer' }}>Interest-Based Ads</span>
+          <Link to="/admin/verify-students" style={{ color: '#38BDF8', textDecoration: 'none' }}>Admin Verification Portal</Link>
         </div>
-        <p style={{ color: '#999' }}>
-          © 2026, NEXO.in, Inc. or its affiliates. Tagline: <em>Shop Smart. Live Better.</em>
-        </p>
+        <div>© 2026 NEXO.in, Inc. or its affiliates. All rights reserved. Built for College Students across India.</div>
       </div>
     </footer>
   );
