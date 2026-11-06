@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { Search, MapPin, ShoppingCart, Menu, GraduationCap, ChevronDown } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useCart } from '../../context/CartContext'; // 👈 Cart Context import kiya
 
 export default function Navbar({ onSearch }) {
   const { user } = useAuth();
+  const { totalItems, setIsCartOpen } = useCart(); // 👈 Live Cart count aur Drawer open karne ka function
   const [searchInput, setSearchInput] = useState('');
 
   const handleSearchSubmit = (e) => {
@@ -116,8 +118,11 @@ export default function Navbar({ onSearch }) {
           <span style={{ fontSize: '0.85rem', fontWeight: '700' }}>& Orders</span>
         </div>
 
-        {/* Amazon Yellow Cart */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', padding: '4px 8px' }}>
+        {/* 🛒 Live Cart Icon with Click & Real Count */}
+        <div
+          onClick={() => setIsCartOpen(true)}
+          style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', padding: '4px 8px' }}
+        >
           <div style={{ position: 'relative' }}>
             <ShoppingCart size={32} color="#FFF" />
             <span style={{
@@ -127,13 +132,15 @@ export default function Navbar({ onSearch }) {
               color: '#FF9900',
               fontWeight: '900',
               fontSize: '0.95rem'
-            }}>0</span>
+            }}>
+              {totalItems}
+            </span>
           </div>
           <span style={{ fontSize: '0.85rem', fontWeight: '700', marginTop: '10px' }}>Cart</span>
         </div>
       </div>
 
-      {/* 2. Amazon Sub-Navigation Strip (Deals bar) */}
+      {/* 2. Sub-Navigation Strip */}
       <div style={{
         backgroundColor: '#232F3E',
         padding: '8px 18px',
@@ -148,17 +155,15 @@ export default function Navbar({ onSearch }) {
             <Menu size={18} />
             <span>All</span>
           </div>
-          <span style={{ cursor: 'pointer', color: '#FF9900', fontWeight: 'bold' }}>🎓 Student Exclusive Deals</span>
+          <span style={{ cursor: 'pointer', color: '#FF9900', fontWeight: 'bold' }}>🎓 Student Deals</span>
           <span style={{ cursor: 'pointer' }}>College Laptops</span>
           <span style={{ cursor: 'pointer' }}>Audio & Headphones</span>
           <span style={{ cursor: 'pointer' }}>Backpacks & Fashion</span>
-          <span style={{ cursor: 'pointer' }}>Books & Stationery</span>
-          <span style={{ cursor: 'pointer' }}>Under ₹499 Deals</span>
+          <span style={{ cursor: 'pointer' }}>Books & Notes</span>
         </div>
 
-        {/* Festival Badge */}
         <div style={{ fontWeight: '700', color: '#FF9900', display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <span>🎉 NEXO Mega Student Festival | Live Now &gt;</span>
+          <span>🎉 NEXO Student Festival | Extra 25% Off</span>
         </div>
       </div>
     </header>

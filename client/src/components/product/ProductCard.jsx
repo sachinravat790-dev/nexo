@@ -1,36 +1,40 @@
 import { Star, ShoppingCart } from 'lucide-react';
+import { useCart } from '../../context/CartContext'; // 👈 Cart Context import kiya
 
 export default function ProductCard({ product }) {
+  const { addToCart } = useCart(); // 👈 Add to Cart function nikaala
+
   const discountPercent = Math.round(
     ((product.originalPrice - product.price) / product.originalPrice) * 100
   );
 
   return (
-    <div style={{
-      backgroundColor: '#FFFFFF',
-      border: '1px solid #E2E8F0',
-      borderRadius: '12px',
-      padding: '16px',
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'space-between',
-      cursor: 'pointer',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-      transition: 'all 0.2s ease',
-      position: 'relative'
-    }}
-    onMouseEnter={(e) => {
-      e.currentTarget.style.transform = 'translateY(-4px)';
-      e.currentTarget.style.boxShadow = '0 10px 25px rgba(0,0,0,0.08)';
-      e.currentTarget.style.borderColor = '#CBD5E1';
-    }}
-    onMouseLeave={(e) => {
-      e.currentTarget.style.transform = 'translateY(0)';
-      e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.04)';
-      e.currentTarget.style.borderColor = '#E2E8F0';
-    }}
+    <div
+      style={{
+        backgroundColor: '#FFFFFF',
+        border: '1px solid #E2E8F0',
+        borderRadius: '12px',
+        padding: '16px',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        cursor: 'pointer',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+        transition: 'all 0.2s ease',
+        position: 'relative'
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = 'translateY(-4px)';
+        e.currentTarget.style.boxShadow = '0 10px 25px rgba(0,0,0,0.08)';
+        e.currentTarget.style.borderColor = '#CBD5E1';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = 'translateY(0)';
+        e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.04)';
+        e.currentTarget.style.borderColor = '#E2E8F0';
+      }}
     >
-      {/* Student Deal Badge (Clean & Subtle) */}
+      {/* Student Deal Badge */}
       {product.isStudentDeal && (
         <div style={{
           position: 'absolute',
@@ -135,24 +139,26 @@ export default function ProductCard({ product }) {
         </div>
       </div>
 
-      {/* Button */}
-      <button style={{
-        marginTop: '14px',
-        width: '100%',
-        backgroundColor: '#0F172A',
-        color: '#FFF',
-        borderRadius: '8px',
-        padding: '10px',
-        fontSize: '0.85rem',
-        fontWeight: '600',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '6px',
-        transition: 'background 0.2s'
-      }}
-      onMouseEnter={(e) => (e.target.style.backgroundColor = '#1E293B')}
-      onMouseLeave={(e) => (e.target.style.backgroundColor = '#0F172A')}
+      {/* 🛒 Add to Cart Button (Live Click Action) */}
+      <button
+        onClick={() => addToCart(product)}
+        style={{
+          marginTop: '14px',
+          width: '100%',
+          backgroundColor: '#0F172A',
+          color: '#FFF',
+          borderRadius: '8px',
+          padding: '10px',
+          fontSize: '0.85rem',
+          fontWeight: '600',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '6px',
+          transition: 'background 0.2s'
+        }}
+        onMouseEnter={(e) => (e.target.style.backgroundColor = '#1E293B')}
+        onMouseLeave={(e) => (e.target.style.backgroundColor = '#0F172A')}
       >
         <ShoppingCart size={15} />
         <span>Add to Cart</span>
