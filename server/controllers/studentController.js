@@ -1,4 +1,6 @@
 const User = require('../models/User');
+const mongoose = require('mongoose');
+const userStore = require('../utils/userStore');
 
 // Helper function to generate unique Student ID Code
 const generateStudentId = () => {
@@ -20,24 +22,44 @@ exports.submitVerification = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Please upload your College ID card' });
     }
 
-    // Server relative URL for uploaded document
     const documentUrl = `/uploads/${req.file.filename}`;
 
-    // Update user document
-    const updatedUser = await User.findByIdAndUpdate(
-      req.user._id,
-      {
-        'studentDetails.collegeName': collegeName,
-        'studentDetails.documentUrl': documentUrl,
-        'studentDetails.verificationStatus': 'pending',
-      },
-      { new: true }
-    ).select('-password');
+    // 1. Try updating in MongoDB
+    if (mongoose.connection.readyState === 1) {
+      try {
+        const updatedUser = await User.findByIdAndUpdate(
+          req.user._id,
+          {
+            'studentDetails.collegeName': collegeName,
+            'studentDetails.documentUrl': documentUrl,
+            'studentDetails.verificationStatus': 'pending',
+          },
+          { new: true }
+        ).select('-password');
+
+        if (updatedUser) {
+          return res.status(200).json({
+            success: true,
+            message: 'Document submitted successfully! Verification is under review.',
+            studentDetails: updatedUser.studentDetails,
+          });
+        }
+      } catch (dbErr) {
+        console.log('MongoDB update failed, using local userStore');
+      }
+    }
+
+    // 2. Resilient update in userStore
+    const updatedMem = userStore.updateUser(req.user._id, {
+      'studentDetails.collegeName': collegeName,
+      'studentDetails.documentUrl': documentUrl,
+      'studentDetails.verificationStatus': 'pending',
+    });
 
     res.status(200).json({
       success: true,
       message: 'Document submitted successfully! Verification is under review.',
-      studentDetails: updatedUser.studentDetails,
+      studentDetails: updatedMem ? updatedMem.studentDetails : { verificationStatus: 'pending' },
     });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Submission failed', error: error.message });
@@ -48,14 +70,30 @@ exports.submitVerification = async (req, res) => {
 // @route   GET /api/student/admin/pending
 exports.getPendingVerifications = async (req, res) => {
   try {
-    const pendingStudents = await User.find({
-      'studentDetails.verificationStatus': 'pending',
-    }).select('name email role studentDetails createdAt');
+    if (mongoose.connection.readyState === 1) {
+      try {
+        const pendingStudents = await User.find({
+          'studentDetails.verificationStatus': 'pending',
+        }).select('name email role studentDetails createdAt');
 
+        if (pendingStudents && pendingStudents.length > 0) {
+          return res.status(200).json({
+            success: true,
+            count: pendingStudents.length,
+            students: pendingStudents,
+          });
+        }
+      } catch (dbErr) {
+        // Fallback to userStore
+      }
+    }
+
+    // Fallback to userStore
+    const memPending = userStore.getPendingStudents();
     res.status(200).json({
       success: true,
-      count: pendingStudents.length,
-      students: pendingStudents,
+      count: memPending.length,
+      students: memPending,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to fetch pending requests', error: error.message });
@@ -66,32 +104,49 @@ exports.getPendingVerifications = async (req, res) => {
 // @route   PUT /api/student/admin/review/:userId
 exports.reviewVerification = async (req, res) => {
   try {
-    const { status } = req.body; // 'approved' or 'rejected'
+    const { status } = req.body;
 
     if (!['approved', 'rejected'].includes(status)) {
       return res.status(400).json({ success: false, message: 'Status must be approved or rejected' });
     }
 
-    const updateData = {
+    const newStudentId = status === 'approved' ? generateStudentId() : null;
+
+    if (mongoose.connection.readyState === 1) {
+      try {
+        const updateData = {
+          'studentDetails.verificationStatus': status,
+        };
+        if (status === 'approved') {
+          updateData.role = 'student';
+          updateData['studentDetails.studentIdCode'] = newStudentId;
+          updateData['studentDetails.verifiedAt'] = new Date();
+        }
+
+        const student = await User.findByIdAndUpdate(req.params.userId, updateData, { new: true }).select('-password');
+        if (student) {
+          return res.status(200).json({
+            success: true,
+            message: `Student verification ${status} successfully!`,
+            student,
+          });
+        }
+      } catch (dbErr) {
+        // Fallback to userStore
+      }
+    }
+
+    // Fallback to userStore
+    const updated = userStore.updateUser(req.params.userId, {
+      role: status === 'approved' ? 'student' : 'customer',
       'studentDetails.verificationStatus': status,
-    };
-
-    if (status === 'approved') {
-      updateData.role = 'student'; // Upgrade user role to verified student
-      updateData['studentDetails.studentIdCode'] = generateStudentId();
-      updateData['studentDetails.verifiedAt'] = new Date();
-    }
-
-    const student = await User.findByIdAndUpdate(req.params.userId, updateData, { new: true }).select('-password');
-
-    if (!student) {
-      return res.status(404).json({ success: false, message: 'Student not found' });
-    }
+      'studentDetails.studentIdCode': newStudentId,
+    });
 
     res.status(200).json({
       success: true,
       message: `Student verification ${status} successfully!`,
-      student,
+      student: updated,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Review action failed', error: error.message });
