@@ -146,10 +146,13 @@ export default function Navbar({ onSearch }) {
         )}
 
         {/* Returns & Orders */}
-        <div style={{ display: 'flex', flexDirection: 'column', cursor: 'pointer', padding: '4px 8px', lineHeight: '1.2' }}>
+        <Link
+          to="/orders"
+          style={{ display: 'flex', flexDirection: 'column', cursor: 'pointer', padding: '4px 8px', lineHeight: '1.2', color: '#FFF', textDecoration: 'none' }}
+        >
           <span style={{ fontSize: '0.72rem', color: '#CCCCCC' }}>Returns</span>
           <span style={{ fontSize: '0.85rem', fontWeight: '700' }}>& Orders</span>
-        </div>
+        </Link>
 
         {/* Live Cart Icon */}
         <div

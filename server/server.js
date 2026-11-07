@@ -14,13 +14,12 @@ app.use(express.urlencoded({ extended: true }));
 // Serve Uploaded Student ID Photos
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-
 // Root Route
 app.get('/', (req, res) => {
   res.send('🚀 NEXO Backend API is Running! Go to <a href="/api/health">/api/health</a> for status.');
 });
 
-// Health Check API (Isko rehne dena hai)
+// Health Check API
 app.get('/api/health', (req, res) => {
   const dbStatus = mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected (Pending Setup)';
   res.status(200).json({
@@ -32,7 +31,6 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// 👇 Iske theek neeche yeh 2 lines add karni hain:
 // Auth Routes (Day 2)
 const authRoutes = require('./routes/authRoutes');
 app.use('/api/auth', authRoutes);
@@ -40,9 +38,18 @@ app.use('/api/auth', authRoutes);
 // Product Routes (Day 3)
 const productRoutes = require('./routes/productRoutes');
 app.use('/api/products', productRoutes);
+
 // Student Verification Routes (Day 6)
 const studentRoutes = require('./routes/studentRoutes');
 app.use('/api/student', studentRoutes);
+
+// Coupon Engine Routes (Day 7)
+const couponRoutes = require('./routes/couponRoutes');
+app.use('/api/coupons', couponRoutes);
+
+// Order Checkout Routes (Day 7)
+const orderRoutes = require('./routes/orderRoutes');
+app.use('/api/orders', orderRoutes);
 
 // Database Connection (Async - Will not crash server if disconnected)
 const connectDB = async () => {

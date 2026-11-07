@@ -25,15 +25,13 @@ export const CartProvider = ({ children }) => {
     setCartItems((prevItems) => {
       const existing = prevItems.find((item) => item._id === product._id);
       if (existing) {
-        // Agar item pehle se hai toh quantity +1 karo
         return prevItems.map((item) =>
           item._id === product._id ? { ...item, quantity: item.quantity + 1 } : item
         );
       }
-      // Naya item add karo
       return [...prevItems, { ...product, quantity: 1 }];
     });
-    setIsCartOpen(true); // Cart add hote hi drawer open karo
+    setIsCartOpen(true);
   };
 
   // 2. Remove Item from Cart
@@ -54,7 +52,13 @@ export const CartProvider = ({ children }) => {
     );
   };
 
-  // 4. Calculations (Totals & Student Savings)
+  // 4. Clear Cart (Order place hone ke baad)
+  const clearCart = () => {
+    setCartItems([]);
+    localStorage.removeItem('nexo_cart');
+  };
+
+  // 5. Calculations (Totals & Student Savings)
   const totalItems = cartItems.reduce((acc, item) => acc + item.quantity, 0);
 
   const normalSubtotal = cartItems.reduce(
@@ -63,11 +67,11 @@ export const CartProvider = ({ children }) => {
   );
 
   const studentSubtotal = cartItems.reduce(
-    (acc, item) => acc + item.studentPrice * item.quantity,
+    (acc, item) => acc + (item.studentPrice || item.price) * item.quantity,
     0
   );
 
-  const totalSavings = normalSubtotal - studentSubtotal;
+  const totalSavings = Math.max(0, normalSubtotal - studentSubtotal);
 
   return (
     <CartContext.Provider
@@ -78,6 +82,7 @@ export const CartProvider = ({ children }) => {
         addToCart,
         removeFromCart,
         updateQuantity,
+        clearCart,
         totalItems,
         normalSubtotal,
         studentSubtotal,

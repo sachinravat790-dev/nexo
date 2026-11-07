@@ -6,6 +6,8 @@ import Home from './pages/Home';
 import Auth from './pages/Auth';
 import StudentVerification from './pages/StudentVerification';
 import VerifyStudents from './pages/admin/VerifyStudents';
+import Checkout from './pages/Checkout';
+import MyOrders from './pages/MyOrders';
 
 function App() {
   return (
@@ -25,6 +27,12 @@ function App() {
 
             {/* 4. Admin Verification Queue Portal */}
             <Route path="/admin/verify-students" element={<VerifyStudents />} />
+
+            {/* 5. Campus Checkout (Day 7) */}
+            <Route path="/checkout" element={<Checkout />} />
+
+            {/* 6. Order Tracking & History (Day 7) */}
+            <Route path="/orders" element={<MyOrders />} />
           </Routes>
           <CartDrawer />
         </CartProvider>
