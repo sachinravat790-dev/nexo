@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import Navbar from '../components/common/Navbar';
 import ProductCard from '../components/product/ProductCard';
 import Footer from '../components/common/Footer';
+import apiClient from '../api/apiClient';
 import { ArrowRight, Sparkles, GraduationCap, Laptop, Headphones, BookOpen, ShoppingBag } from 'lucide-react';
 
 export default function Home() {
@@ -10,17 +12,18 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
 
-  const fetchProducts = (query = '') => {
+  const fetchProducts = (query = '', category = 'All') => {
     setLoading(true);
-    const url = query
-      ? `http://localhost:8000/api/products?search=${query}`
-      : 'http://localhost:8000/api/products';
+    const params = new URLSearchParams();
+    if (query) params.append('search', query);
+    if (category && category !== 'All') params.append('category', category);
+    params.append('limit', '20');
 
-    fetch(url)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success) {
-          setProducts(data.products);
+    apiClient
+      .get(`/products?${params.toString()}`)
+      .then((res) => {
+        if (res.data.success) {
+          setProducts(res.data.products);
         }
       })
       .catch((err) => console.error(err))
@@ -33,7 +36,14 @@ export default function Home() {
 
   const handleSearch = (text) => {
     setSearchQuery(text);
-    fetchProducts(text);
+    setSelectedCategory('All'); // Search karne par category filter reset karo
+    fetchProducts(text, 'All');
+  };
+
+  const handleCategoryClick = (catName) => {
+    setSelectedCategory(catName);
+    setSearchQuery(''); // Category select karne par search reset karo
+    fetchProducts('', catName);
   };
 
   const categories = [
@@ -89,22 +99,26 @@ export default function Home() {
               Get competitive market prices for everyone, plus exclusive student coupons on laptops, headphones, backpacks & books.
             </p>
 
-            <button style={{
-              marginTop: '20px',
-              backgroundColor: '#4F46E5',
-              color: '#FFF',
-              padding: '12px 24px',
-              borderRadius: '10px',
-              fontWeight: '700',
-              fontSize: '0.9rem',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              transition: 'background 0.2s'
-            }}>
+            <Link
+              to="/student-verify"
+              style={{
+                marginTop: '20px',
+                backgroundColor: '#4F46E5',
+                color: '#FFF',
+                padding: '12px 24px',
+                borderRadius: '10px',
+                fontWeight: '700',
+                fontSize: '0.9rem',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                textDecoration: 'none',
+                transition: 'background 0.2s'
+              }}
+            >
               <span>Verify College ID Now</span>
               <ArrowRight size={16} />
-            </button>
+            </Link>
           </div>
 
           {/* Right Hero Graphic Card */}
@@ -124,12 +138,12 @@ export default function Home() {
           </div>
         </div>
 
-        {/* 2. CATEGORY FILTER PILLS (Clean & Simple) */}
+        {/* 2. CATEGORY FILTER PILLS */}
         <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '16px', marginBottom: '20px' }}>
           {categories.map((cat) => (
             <button
               key={cat.name}
-              onClick={() => setSelectedCategory(cat.name)}
+              onClick={() => handleCategoryClick(cat.name)}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -142,6 +156,7 @@ export default function Home() {
                 color: selectedCategory === cat.name ? '#FFFFFF' : '#475569',
                 border: '1px solid #E2E8F0',
                 boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+                cursor: 'pointer',
                 transition: 'all 0.2s'
               }}
             >
@@ -155,7 +170,11 @@ export default function Home() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '18px' }}>
           <div>
             <h2 style={{ fontSize: '1.4rem', fontWeight: '800', color: '#0F172A' }}>
-              {searchQuery ? `Search results for "${searchQuery}"` : 'Recommended For College Students'}
+              {searchQuery
+                ? `Search results for "${searchQuery}"`
+                : selectedCategory !== 'All'
+                ? `${selectedCategory} Products`
+                : 'Recommended For College Students'}
             </h2>
             <p style={{ fontSize: '0.85rem', color: '#64748B', marginTop: '2px' }}>
               Showing verified deals with dual pricing
@@ -172,8 +191,20 @@ export default function Home() {
             Loading products...
           </div>
         ) : products.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px', color: '#64748B' }}>
-            No products found matching your search.
+          <div style={{
+            textAlign: 'center',
+            padding: '60px 20px',
+            backgroundColor: '#FFFFFF',
+            borderRadius: '12px',
+            border: '1px solid #E2E8F0'
+          }}>
+            <div style={{ fontSize: '2rem', marginBottom: '10px' }}>🔍</div>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#0F172A', marginBottom: '6px' }}>
+              No products found {searchQuery ? `for "${searchQuery}"` : ''}
+            </h3>
+            <p style={{ color: '#64748B', fontSize: '0.9rem' }}>
+              Try searching with a different keyword like "headphones", "laptop", "bag", or "bottle".
+            </p>
           </div>
         ) : (
           <div style={{

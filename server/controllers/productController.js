@@ -1,23 +1,43 @@
 const Product = require('../models/Product');
 const Category = require('../models/Category');
 
-// @desc    Get all products with Search, Category Filter, Price Range & Pagination
+// @desc    Get all products with Flipkart-style Smart Search, Category Filter, Price Range & Pagination
 // @route   GET /api/products
 exports.getProducts = async (req, res) => {
   try {
-    const { search, category, minPrice, maxPrice, sort, page = 1, limit = 8 } = req.query;
+    const { search, category, minPrice, maxPrice, sort, page = 1, limit = 20 } = req.query;
 
     // 1. Build Query Object
     let query = {};
 
-    // Search by Keyword (Title me dhoondo)
+    // Flipkart-Style Smart Search (Title + Description + Tags dono me dhundho)
     if (search) {
-      query.title = { $regex: search, $options: 'i' }; // 'i' means case-insensitive
+      const searchTerms = search.trim().split(/\s+/); // "laptop bag" → ["laptop", "bag"]
+
+      // Har word ke liye alag regex banao aur OR se match karo
+      const orConditions = searchTerms.flatMap((term) => [
+        { title: { $regex: term, $options: 'i' } },
+        { description: { $regex: term, $options: 'i' } },
+        { tags: { $regex: term, $options: 'i' } },
+        { brand: { $regex: term, $options: 'i' } },
+      ]);
+
+      query.$or = orConditions;
     }
 
-    // Filter by Category
-    if (category) {
-      query.category = category;
+    // Filter by Category (by name or ObjectId)
+    if (category && category !== 'All') {
+      // Pehle category name se ObjectId dhundho
+      const catDoc = await Category.findOne({
+        $or: [
+          { name: { $regex: category, $options: 'i' } },
+          { slug: { $regex: category, $options: 'i' } },
+        ],
+      });
+
+      if (catDoc) {
+        query.category = catDoc._id;
+      }
     }
 
     // Filter by Price Range
@@ -27,11 +47,12 @@ exports.getProducts = async (req, res) => {
       if (maxPrice) query.price.$lte = Number(maxPrice);
     }
 
-    // 2. Sorting (Price low-to-high, high-to-low, newest)
+    // 2. Sorting (Price low-to-high, high-to-low, newest, rating)
     let sortOption = { createdAt: -1 }; // Default: Newest first
     if (sort === 'price-low') sortOption = { price: 1 };
     if (sort === 'price-high') sortOption = { price: -1 };
     if (sort === 'rating') sortOption = { rating: -1 };
+    if (sort === 'popularity') sortOption = { numReviews: -1 };
 
     // 3. Pagination
     const skip = (Number(page) - 1) * Number(limit);

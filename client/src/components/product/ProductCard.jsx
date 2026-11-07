@@ -64,7 +64,7 @@ export default function ProductCard({ product }) {
         margin: '8px 0 14px 0'
       }}>
         <img
-          src={product.images[0]}
+          src={product.image || product.images?.[0] || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&q=80'}
           alt={product.title}
           style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }}
         />

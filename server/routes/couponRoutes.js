@@ -10,3 +10,4 @@ router.get('/', getAllCoupons);
 router.post('/apply', protect, applyCoupon);
 
 module.exports = router;
+
