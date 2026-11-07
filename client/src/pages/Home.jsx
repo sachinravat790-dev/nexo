@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import Navbar from '../components/common/Navbar';
 import ProductCard from '../components/product/ProductCard';
 import Footer from '../components/common/Footer';
 import apiClient from '../api/apiClient';
-import { ArrowRight, Sparkles, GraduationCap, Laptop, Headphones, BookOpen, ShoppingBag } from 'lucide-react';
+import { ArrowRight, Sparkles, GraduationCap, Laptop, Headphones, BookOpen, ShoppingBag, RefreshCw } from 'lucide-react';
 
 export default function Home() {
+  const location = useLocation();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -17,7 +18,7 @@ export default function Home() {
     const params = new URLSearchParams();
     if (query) params.append('search', query);
     if (category && category !== 'All') params.append('category', category);
-    params.append('limit', '20');
+    params.append('limit', '30');
 
     apiClient
       .get(`/products?${params.toString()}`)
@@ -26,24 +27,41 @@ export default function Home() {
           setProducts(res.data.products);
         }
       })
-      .catch((err) => console.error(err))
+      .catch((err) => {
+        console.error('Fetch products error:', err);
+      })
       .finally(() => setLoading(false));
   };
 
+  // Sync with URL query parameter or mount
   useEffect(() => {
-    fetchProducts();
-  }, []);
+    const params = new URLSearchParams(location.search);
+    const searchFromUrl = params.get('search');
+    if (searchFromUrl) {
+      setSearchQuery(searchFromUrl);
+      setSelectedCategory('All');
+      fetchProducts(searchFromUrl, 'All');
+    } else {
+      fetchProducts();
+    }
+  }, [location.search]);
 
   const handleSearch = (text) => {
     setSearchQuery(text);
-    setSelectedCategory('All'); // Search karne par category filter reset karo
+    setSelectedCategory('All');
     fetchProducts(text, 'All');
   };
 
   const handleCategoryClick = (catName) => {
     setSelectedCategory(catName);
-    setSearchQuery(''); // Category select karne par search reset karo
+    setSearchQuery('');
     fetchProducts('', catName);
+  };
+
+  const handleClearSearch = () => {
+    setSearchQuery('');
+    setSelectedCategory('All');
+    fetchProducts('', 'All');
   };
 
   const categories = [
@@ -58,7 +76,7 @@ export default function Home() {
     <div style={{ minHeight: '100vh', backgroundColor: '#F8FAFC', display: 'flex', flexDirection: 'column' }}>
       <Navbar onSearch={handleSearch} />
 
-      <main style={{ maxWidth: '1360px', margin: '0 auto', width: '100%', padding: '24px 20px' }}>
+      <main style={{ maxWidth: '1360px', margin: '0 auto', width: '100%', padding: '24px 20px', flex: 1 }}>
 
         {/* 1. CLEAN ELEGANT HERO BANNER */}
         <div style={{
@@ -173,16 +191,36 @@ export default function Home() {
               {searchQuery
                 ? `Search results for "${searchQuery}"`
                 : selectedCategory !== 'All'
-                ? `${selectedCategory} Products`
+                ? `${selectedCategory} Deals`
                 : 'Recommended For College Students'}
             </h2>
             <p style={{ fontSize: '0.85rem', color: '#64748B', marginTop: '2px' }}>
-              Showing verified deals with dual pricing
+              Showing verified deals with exclusive student pricing
             </p>
           </div>
-          <span style={{ fontSize: '0.85rem', color: '#4F46E5', fontWeight: '700' }}>
-            {products.length} Products Found
-          </span>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            {searchQuery && (
+              <button
+                onClick={handleClearSearch}
+                style={{
+                  background: '#F1F5F9',
+                  border: '1px solid #CBD5E1',
+                  borderRadius: '6px',
+                  padding: '4px 10px',
+                  fontSize: '0.8rem',
+                  fontWeight: '600',
+                  color: '#475569',
+                  cursor: 'pointer'
+                }}
+              >
+                ✕ Clear Search
+              </button>
+            )}
+            <span style={{ fontSize: '0.85rem', color: '#4F46E5', fontWeight: '700' }}>
+              {products.length} Products Found
+            </span>
+          </div>
         </div>
 
         {/* 4. CLEAN PRODUCT GRID */}
@@ -198,17 +236,16 @@ export default function Home() {
             borderRadius: '12px',
             border: '1px solid #E2E8F0'
           }}>
-            <div style={{ fontSize: '2rem', marginBottom: '10px' }}>🔍</div>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#0F172A', marginBottom: '6px' }}>
+            <div style={{ fontSize: '2.5rem', marginBottom: '10px' }}>🔍</div>
+            <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: '#0F172A', marginBottom: '6px' }}>
               No products found {searchQuery ? `for "${searchQuery}"` : ''}
             </h3>
-            <p style={{ color: '#64748B', fontSize: '0.9rem' }}>
-              Try searching with a different keyword like "headphones", "laptop", "bag", or "bottle".
+            <p style={{ color: '#64748B', fontSize: '0.9rem', marginBottom: '16px' }}>
+              Try searching with popular keywords like "mac", "bag", "shoes", "headphone", "iphone", or "bottle".
             </p>
             <button
-              onClick={() => { setSearchQuery(''); setSelectedCategory('All'); fetchProducts('', 'All'); }}
+              onClick={handleClearSearch}
               style={{
-                marginTop: '14px',
                 backgroundColor: '#0F172A',
                 color: '#FFF',
                 padding: '10px 20px',

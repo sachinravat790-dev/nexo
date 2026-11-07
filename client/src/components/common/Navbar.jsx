@@ -1,18 +1,71 @@
-import { useState } from 'react';
-import { Search, MapPin, ShoppingCart, Menu, GraduationCap, ChevronDown, LogOut } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { Search, MapPin, ShoppingCart, Menu, GraduationCap, ChevronDown, LogOut, ArrowUpRight, Sparkles } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+
+const POPULAR_SEARCHES = [
+  { label: 'MacBook Air M2', query: 'mac' },
+  { label: 'College Backpack Bags', query: 'bag' },
+  { label: 'boAt Rockerz Headphones', query: 'headphone' },
+  { label: 'Sony WH-1000XM5 ANC', query: 'sony' },
+  { label: 'Puma & Nike College Shoes', query: 'shoes' },
+  { label: 'Noise Smartwatch', query: 'watch' },
+  { label: 'Classmate Notebooks & Notes', query: 'notes' },
+  { label: 'Milton Insulated Thermal Flask', query: 'bottle' },
+  { label: 'Apple iPhone 15', query: 'iphone' },
+  { label: 'Logitech Wireless Mouse', query: 'mouse' },
+  { label: 'College Fleece Hoodie', query: 'hoodie' },
+];
 
 export default function Navbar({ onSearch }) {
+  const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { totalItems, setIsCartOpen } = useCart();
   const [searchInput, setSearchInput] = useState('');
+  const [isFocused, setIsFocused] = useState(false);
+  const searchContainerRef = useRef(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target)) {
+        setIsFocused(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
-    if (onSearch) onSearch(searchInput);
+    setIsFocused(false);
+    if (!searchInput.trim()) return;
+
+    if (onSearch) {
+      onSearch(searchInput.trim());
+    } else {
+      navigate(`/?search=${encodeURIComponent(searchInput.trim())}`);
+    }
   };
+
+  const handleSelectSuggestion = (query) => {
+    setSearchInput(query);
+    setIsFocused(false);
+    if (onSearch) {
+      onSearch(query);
+    } else {
+      navigate(`/?search=${encodeURIComponent(query)}`);
+    }
+  };
+
+  // Filter suggestions based on input
+  const filteredSuggestions = searchInput.trim()
+    ? POPULAR_SEARCHES.filter((s) =>
+        s.label.toLowerCase().includes(searchInput.toLowerCase()) ||
+        s.query.toLowerCase().includes(searchInput.toLowerCase())
+      )
+    : POPULAR_SEARCHES.slice(0, 6);
 
   return (
     <header style={{ width: '100%', position: 'sticky', top: 0, zIndex: 100 }}>
@@ -41,50 +94,144 @@ export default function Navbar({ onSearch }) {
           </div>
         </div>
 
-        {/* Amazon-Style Wide Search Bar */}
-        <form onSubmit={handleSearchSubmit} style={{ flex: 1, display: 'flex', height: '40px', borderRadius: '4px', overflow: 'hidden' }}>
-          <div style={{
-            backgroundColor: '#E6E6E6',
-            color: '#333',
-            fontSize: '0.75rem',
-            padding: '0 10px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px',
-            borderRight: '1px solid #CCC',
-            cursor: 'pointer'
-          }}>
-            <span>All</span>
-            <ChevronDown size={14} />
-          </div>
-          <input
-            type="text"
-            placeholder="Search NEXO.in for Laptops, boAt Headphones, Bags & Student Deals..."
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
+        {/* Amazon-Style Wide Search Bar with Live Suggestion Dropdown */}
+        <div ref={searchContainerRef} style={{ flex: 1, position: 'relative' }}>
+          <form
+            onSubmit={handleSearchSubmit}
             style={{
-              flex: 1,
-              padding: '0 14px',
-              border: 'none',
-              outline: 'none',
-              fontSize: '0.95rem'
-            }}
-          />
-          <button
-            type="submit"
-            style={{
-              backgroundColor: '#FEBD69',
-              border: 'none',
-              width: '45px',
               display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer'
+              height: '40px',
+              borderRadius: '6px',
+              overflow: 'hidden',
+              boxShadow: isFocused ? '0 0 0 3px #FF9900' : 'none',
+              transition: 'box-shadow 0.2s'
             }}
           >
-            <Search size={20} color="#333" />
-          </button>
-        </form>
+            <div style={{
+              backgroundColor: '#E6E6E6',
+              color: '#333',
+              fontSize: '0.75rem',
+              padding: '0 10px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              borderRight: '1px solid #CCC',
+              cursor: 'pointer'
+            }}>
+              <span>All</span>
+              <ChevronDown size={14} />
+            </div>
+
+            <input
+              type="text"
+              placeholder="Search NEXO for Laptops, boAt, Bags, Shoes, iPhone, Watch..."
+              value={searchInput}
+              onFocus={() => setIsFocused(true)}
+              onChange={(e) => setSearchInput(e.target.value)}
+              style={{
+                flex: 1,
+                padding: '0 14px',
+                border: 'none',
+                outline: 'none',
+                fontSize: '0.95rem'
+              }}
+            />
+
+            <button
+              type="submit"
+              style={{
+                backgroundColor: '#FEBD69',
+                border: 'none',
+                width: '45px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                transition: 'background 0.2s'
+              }}
+            >
+              <Search size={20} color="#333" />
+            </button>
+          </form>
+
+          {/* Flipkart / Amazon Live Auto-Suggest Dropdown */}
+          {isFocused && (
+            <div style={{
+              position: 'absolute',
+              top: '44px',
+              left: 0,
+              right: 0,
+              backgroundColor: '#FFFFFF',
+              borderRadius: '8px',
+              boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
+              border: '1px solid #E2E8F0',
+              overflow: 'hidden',
+              zIndex: 1000,
+              animation: 'fadeIn 0.15s ease-out'
+            }}>
+              <div style={{
+                padding: '8px 14px',
+                backgroundColor: '#F8FAFC',
+                borderBottom: '1px solid #F1F5F9',
+                fontSize: '0.75rem',
+                fontWeight: '700',
+                color: '#64748B',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}>
+                <Sparkles size={13} color="#FF9900" />
+                <span>POPULAR CAMPUS SEARCHES</span>
+              </div>
+
+              <div style={{ padding: '6px 0' }}>
+                {filteredSuggestions.length > 0 ? (
+                  filteredSuggestions.map((item, idx) => (
+                    <div
+                      key={idx}
+                      onClick={() => handleSelectSuggestion(item.query)}
+                      style={{
+                        padding: '10px 16px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        cursor: 'pointer',
+                        fontSize: '0.9rem',
+                        color: '#0F172A',
+                        transition: 'background 0.15s'
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#F1F5F9')}
+                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <Search size={15} color="#94A3B8" />
+                        <span style={{ fontWeight: '600' }}>{item.label}</span>
+                      </div>
+                      <ArrowUpRight size={14} color="#CBD5E1" />
+                    </div>
+                  ))
+                ) : (
+                  <div
+                    onClick={() => handleSelectSuggestion(searchInput)}
+                    style={{
+                      padding: '12px 16px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      cursor: 'pointer',
+                      fontSize: '0.9rem',
+                      color: '#4F46E5',
+                      fontWeight: '700'
+                    }}
+                  >
+                    <Search size={16} />
+                    <span>Search for "{searchInput}" across entire store...</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Student Club Action Button */}
         <Link
@@ -105,7 +252,7 @@ export default function Navbar({ onSearch }) {
           <span style={{ fontSize: '0.8rem', fontWeight: '700', color: '#FF9900' }}>Student Club</span>
         </Link>
 
-        {/* Sign In & Account (Dynamic for New & Logged In Users) */}
+        {/* Sign In & Account */}
         {user ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Link
@@ -191,11 +338,16 @@ export default function Navbar({ onSearch }) {
             <Menu size={18} />
             <span>All</span>
           </div>
-          <span style={{ color: '#FF9900', fontWeight: '700', cursor: 'pointer' }}>⚡ Student Deals</span>
-          <span style={{ cursor: 'pointer' }}>College Laptops</span>
-          <span style={{ cursor: 'pointer' }}>Audio & Headphones</span>
-          <span style={{ cursor: 'pointer' }}>Backpacks & Fashion</span>
-          <span style={{ cursor: 'pointer' }}>Books & Notes</span>
+          <span
+            onClick={() => handleSelectSuggestion('student')}
+            style={{ color: '#FF9900', fontWeight: '700', cursor: 'pointer' }}
+          >
+            ⚡ Student Deals
+          </span>
+          <span onClick={() => handleSelectSuggestion('laptop')} style={{ cursor: 'pointer' }}>College Laptops</span>
+          <span onClick={() => handleSelectSuggestion('headphone')} style={{ cursor: 'pointer' }}>Audio & Headphones</span>
+          <span onClick={() => handleSelectSuggestion('bag')} style={{ cursor: 'pointer' }}>Backpacks & Bags</span>
+          <span onClick={() => handleSelectSuggestion('notes')} style={{ cursor: 'pointer' }}>Books & Notes</span>
         </div>
 
         {/* Student Banner Link */}
