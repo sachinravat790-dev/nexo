@@ -205,6 +205,22 @@ export default function Home() {
             <p style={{ color: '#64748B', fontSize: '0.9rem' }}>
               Try searching with a different keyword like "headphones", "laptop", "bag", or "bottle".
             </p>
+            <button
+              onClick={() => { setSearchQuery(''); setSelectedCategory('All'); fetchProducts('', 'All'); }}
+              style={{
+                marginTop: '14px',
+                backgroundColor: '#0F172A',
+                color: '#FFF',
+                padding: '10px 20px',
+                borderRadius: '8px',
+                fontSize: '0.85rem',
+                fontWeight: '700',
+                cursor: 'pointer',
+                border: 'none'
+              }}
+            >
+              Clear Search & View All Products
+            </button>
           </div>
         ) : (
           <div style={{

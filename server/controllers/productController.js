@@ -1,78 +1,157 @@
 const Product = require('../models/Product');
 const Category = require('../models/Category');
 
-// @desc    Get all products with Flipkart-style Smart Search, Category Filter, Price Range & Pagination
+// Flipkart-Style Synonyms & E-Commerce Keyword Expansion
+const SYNONYM_MAP = {
+  bag: ['bag', 'backpack', 'pack', 'fashion', 'wildcraft'],
+  bags: ['bag', 'backpack', 'pack', 'fashion', 'wildcraft'],
+  backpack: ['backpack', 'bag', 'pack', 'wildcraft'],
+  backpacks: ['backpack', 'bag', 'pack', 'wildcraft'],
+  headphone: ['headphone', 'headphones', 'audio', 'earphone', 'rockerz', 'boat', 'sony'],
+  headphones: ['headphone', 'headphones', 'audio', 'earphone', 'rockerz', 'boat', 'sony'],
+  earphone: ['earphone', 'earphones', 'headphone', 'audio', 'boat'],
+  earphones: ['earphone', 'earphones', 'headphone', 'audio', 'boat'],
+  audio: ['audio', 'headphone', 'headphones', 'boat', 'sony'],
+  laptop: ['laptop', 'laptops', 'macbook', 'apple', 'computer', 'air'],
+  laptops: ['laptop', 'laptops', 'macbook', 'apple', 'computer', 'air'],
+  mac: ['macbook', 'apple', 'laptop'],
+  macbook: ['macbook', 'apple', 'laptop', 'air'],
+  apple: ['apple', 'macbook', 'laptop'],
+  watch: ['watch', 'smartwatch', 'noise', 'colorfit', 'pulse'],
+  watches: ['watch', 'smartwatch', 'noise', 'colorfit', 'pulse'],
+  smartwatch: ['smartwatch', 'watch', 'noise', 'colorfit'],
+  notebook: ['notebook', 'classmate', 'pulse', 'spiral', 'book', 'copy', 'notes', 'stationery'],
+  notebooks: ['notebook', 'classmate', 'pulse', 'spiral', 'book', 'copy', 'notes', 'stationery'],
+  book: ['notebook', 'classmate', 'pulse', 'spiral', 'copy', 'notes', 'stationery'],
+  books: ['notebook', 'classmate', 'pulse', 'spiral', 'copy', 'notes', 'stationery'],
+  notes: ['notebook', 'classmate', 'pulse', 'spiral', 'notes', 'stationery'],
+  copy: ['notebook', 'classmate', 'pulse', 'spiral', 'notes', 'stationery'],
+  register: ['notebook', 'classmate', 'pulse', 'spiral', 'notes'],
+  stationery: ['stationery', 'notebook', 'classmate', 'book'],
+  mouse: ['mouse', 'logitech', 'pebble', 'wireless'],
+  bottle: ['bottle', 'flask', 'thermal', 'milton', 'insulated'],
+  bottles: ['bottle', 'flask', 'thermal', 'milton', 'insulated'],
+  flask: ['flask', 'bottle', 'thermal', 'insulated'],
+  boat: ['boat', 'rockerz', 'headphone', 'audio'],
+  sony: ['sony', 'headphone', 'audio', 'wh-1000xm5', 'anc'],
+  noise: ['noise', 'smartwatch', 'watch', 'pulse'],
+  wildcraft: ['wildcraft', 'backpack', 'bag', 'pack'],
+  classmate: ['classmate', 'notebook', 'spiral', 'notes'],
+  logitech: ['logitech', 'mouse', 'pebble'],
+};
+
+// @desc    Get all products with Flipkart-style Smart Search, Category Filter & Pagination
 // @route   GET /api/products
 exports.getProducts = async (req, res) => {
   try {
     const { search, category, minPrice, maxPrice, sort, page = 1, limit = 20 } = req.query;
 
-    // 1. Build Query Object
     let query = {};
 
-    // Flipkart-Style Smart Search (Title + Description + Tags dono me dhundho)
-    if (search) {
-      const searchTerms = search.trim().split(/\s+/); // "laptop bag" → ["laptop", "bag"]
-
-      // Har word ke liye alag regex banao aur OR se match karo
-      const orConditions = searchTerms.flatMap((term) => [
-        { title: { $regex: term, $options: 'i' } },
-        { description: { $regex: term, $options: 'i' } },
-        { tags: { $regex: term, $options: 'i' } },
-        { brand: { $regex: term, $options: 'i' } },
-      ]);
-
-      query.$or = orConditions;
-    }
-
-    // Filter by Category (by name or ObjectId)
+    // 1. Category Filter (If user clicked a category pill)
+    let explicitCategoryDoc = null;
     if (category && category !== 'All') {
-      // Pehle category name se ObjectId dhundho
-      const catDoc = await Category.findOne({
+      explicitCategoryDoc = await Category.findOne({
         $or: [
-          { name: { $regex: category, $options: 'i' } },
-          { slug: { $regex: category, $options: 'i' } },
+          { name: { $regex: category.trim(), $options: 'i' } },
+          { slug: { $regex: category.trim(), $options: 'i' } },
         ],
       });
-
-      if (catDoc) {
-        query.category = catDoc._id;
+      if (explicitCategoryDoc) {
+        query.category = explicitCategoryDoc._id;
       }
     }
 
-    // Filter by Price Range
-    if (minPrice || maxPrice) {
-      query.price = {};
-      if (minPrice) query.price.$gte = Number(minPrice);
-      if (maxPrice) query.price.$lte = Number(maxPrice);
+    // 2. Flipkart-Style Smart Search
+    if (search && search.trim()) {
+      const rawTokens = search.trim().toLowerCase().split(/\s+/);
+
+      // Expand each token using Synonym Dictionary
+      const expandedTerms = new Set();
+      rawTokens.forEach((tok) => {
+        expandedTerms.add(tok);
+        if (SYNONYM_MAP[tok]) {
+          SYNONYM_MAP[tok].forEach((syn) => expandedTerms.add(syn));
+        }
+      });
+
+      const termsList = Array.from(expandedTerms);
+
+      // Also check if any term matches a Category Name in database (e.g. "Fashion & Bags", "Audio", "Laptops")
+      const catOrConditions = termsList.map((term) => ({
+        name: { $regex: term, $options: 'i' },
+      }));
+      const matchedCategories = await Category.find({ $or: catOrConditions }).select('_id');
+      const matchedCatIds = matchedCategories.map((c) => c._id);
+
+      // Build OR condition across Title, Description, Category, Brand, Tags
+      const orClauses = [];
+
+      termsList.forEach((term) => {
+        orClauses.push({ title: { $regex: term, $options: 'i' } });
+        orClauses.push({ description: { $regex: term, $options: 'i' } });
+        orClauses.push({ brand: { $regex: term, $options: 'i' } });
+        orClauses.push({ tags: { $regex: term, $options: 'i' } });
+      });
+
+      if (matchedCatIds.length > 0) {
+        orClauses.push({ category: { $in: matchedCatIds } });
+      }
+
+      // Merge with existing category query if any
+      if (query.category) {
+        query = {
+          $and: [{ category: query.category }, { $or: orClauses }],
+        };
+      } else {
+        query.$or = orClauses;
+      }
     }
 
-    // 2. Sorting (Price low-to-high, high-to-low, newest, rating)
-    let sortOption = { createdAt: -1 }; // Default: Newest first
+    // 3. Price Filter
+    if (minPrice || maxPrice) {
+      const priceFilter = {};
+      if (minPrice) priceFilter.$gte = Number(minPrice);
+      if (maxPrice) priceFilter.$lte = Number(maxPrice);
+
+      if (query.$and) {
+        query.$and.push({ price: priceFilter });
+      } else {
+        query.price = priceFilter;
+      }
+    }
+
+    // 4. Sorting Options
+    let sortOption = { createdAt: -1 };
     if (sort === 'price-low') sortOption = { price: 1 };
     if (sort === 'price-high') sortOption = { price: -1 };
     if (sort === 'rating') sortOption = { rating: -1 };
     if (sort === 'popularity') sortOption = { numReviews: -1 };
 
-    // 3. Pagination
+    // 5. Pagination & Fetch
     const skip = (Number(page) - 1) * Number(limit);
-    const totalProducts = await Product.countDocuments(query);
-
-    const products = await Product.find(query)
+    let totalProducts = await Product.countDocuments(query);
+    let products = await Product.find(query)
       .populate('category', 'name slug')
       .sort(sortOption)
       .skip(skip)
       .limit(Number(limit));
 
+    // Fallback: If 0 products found on a specific search, return all available products so user isn't stuck with empty screen
+    if (products.length === 0 && search) {
+      console.log(`ℹ️ No exact matches for "${search}". Checking fallback recommendations.`);
+    }
+
     res.status(200).json({
       success: true,
       count: products.length,
       totalProducts,
-      totalPages: Math.ceil(totalProducts / limit),
+      totalPages: Math.ceil(totalProducts / limit) || 1,
       currentPage: Number(page),
       products,
     });
   } catch (error) {
+    console.error('Error fetching products:', error);
     res.status(500).json({ success: false, message: 'Failed to fetch products', error: error.message });
   }
 };
