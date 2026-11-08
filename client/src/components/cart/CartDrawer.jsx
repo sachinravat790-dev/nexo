@@ -126,7 +126,7 @@ export default function CartDrawer() {
                   <div style={{ width: '70px', height: '70px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <img
                       src={item.image}
-                      alt={item.name}
+                      alt={item.title || item.name}
                       style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
                       onError={(e) => {
                         e.target.src = 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&q=80';
@@ -138,7 +138,7 @@ export default function CartDrawer() {
                   <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                     <div>
                       <h4 style={{ fontSize: '0.85rem', fontWeight: '700', color: '#0F172A', margin: 0, lineHeight: '1.3' }}>
-                        {item.name}
+                        {item.title || item.name}
                       </h4>
                       <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', marginTop: '4px' }}>
                         <span style={{ fontSize: '0.95rem', fontWeight: '800', color: '#4F46E5' }}>

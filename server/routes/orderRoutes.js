@@ -6,13 +6,20 @@ const {
   getMyOrders,
   getOrderById,
   updateOrderStatus,
+  getAllOrders,
+  getAdminStats,
 } = require('../controllers/orderController');
 
-// All order routes are protected with JWT authentication
+// 1. User Order Actions
 router.post('/', protect, createOrder);
 router.get('/my-orders', protect, getMyOrders);
+
+// 2. Admin Analytics & All Orders (Inhe :id se upar rakhna zaroori hai)
+router.get('/all', getAllOrders);
+router.get('/admin/stats', getAdminStats);
+router.put('/:id/status', updateOrderStatus);
+
+// 3. Single Order by ID
 router.get('/:id', protect, getOrderById);
-router.put('/:id/status', protect, updateOrderStatus);
 
 module.exports = router;
-

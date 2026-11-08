@@ -185,3 +185,63 @@ exports.updateOrderStatus = async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 };
+
+// @desc    Get All Orders across Platform (Admin Only)
+// @route   GET /api/orders/all
+exports.getAllOrders = async (req, res) => {
+  try {
+    if (mongoose.connection.readyState === 1) {
+      try {
+        const dbOrders = await Order.find().sort({ createdAt: -1 });
+        if (dbOrders && dbOrders.length > 0) {
+          return res.status(200).json({ success: true, count: dbOrders.length, orders: dbOrders });
+        }
+      } catch (dbErr) {
+        // Fallback to memory
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      count: memoryOrders.length,
+      orders: memoryOrders,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to fetch all orders', error: error.message });
+  }
+};
+
+// @desc    Get Admin Dashboard Analytics Stats
+// @route   GET /api/orders/admin/stats
+exports.getAdminStats = async (req, res) => {
+  try {
+    let allOrders = memoryOrders;
+
+    if (mongoose.connection.readyState === 1) {
+      try {
+        const dbOrders = await Order.find();
+        if (dbOrders && dbOrders.length > 0) {
+          allOrders = dbOrders;
+        }
+      } catch (err) {}
+    }
+
+    const totalOrders = allOrders.length;
+    const totalRevenue = allOrders.reduce((sum, o) => sum + (o.totalPrice || 0), 0);
+    const totalStudentSavings = allOrders.reduce(
+      (sum, o) => sum + ((o.studentSavings || 0) + (o.couponDiscount || 0)),
+      0
+    );
+
+    res.status(200).json({
+      success: true,
+      stats: {
+        totalOrders,
+        totalRevenue,
+        totalStudentSavings,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to load stats', error: error.message });
+  }
+};

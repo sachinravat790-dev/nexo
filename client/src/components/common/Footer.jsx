@@ -63,9 +63,9 @@ export default function Footer() {
             <span style={{ fontSize: '0.85rem', cursor: 'pointer', color: '#DDD' }}>College Campus Ambassador</span>
           </div>
 
-          {/* Column 4 - Student Club & Admin Verification */}
+          {/* Column 4 - Student Club & Admin Operations */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <h4 style={{ color: '#FFF', fontSize: '1rem', fontWeight: '700', marginBottom: '4px' }}>NEXO Student Club</h4>
+            <h4 style={{ color: '#FFF', fontSize: '1rem', fontWeight: '700', marginBottom: '4px' }}>NEXO Operations</h4>
             <Link
               to="/student-verify"
               style={{ fontSize: '0.85rem', cursor: 'pointer', color: '#FF9900', fontWeight: 'bold', textDecoration: 'none' }}
@@ -73,13 +73,18 @@ export default function Footer() {
               🎓 Student ID Verification
             </Link>
             <Link
-              to="/admin/verify-students"
+              to="/admin/dashboard"
               style={{ fontSize: '0.85rem', cursor: 'pointer', color: '#38BDF8', fontWeight: '700', textDecoration: 'none' }}
             >
-              🛡️ Admin Verification Queue
+              📊 Admin Operations & Orders Hub
+            </Link>
+            <Link
+              to="/admin/verify-students"
+              style={{ fontSize: '0.85rem', cursor: 'pointer', color: '#93C5FD', fontWeight: '600', textDecoration: 'none' }}
+            >
+              🛡️ Student Verification Queue
             </Link>
             <span style={{ fontSize: '0.85rem', cursor: 'pointer', color: '#DDD' }}>100% Purchase Protection</span>
-            <span style={{ fontSize: '0.85rem', cursor: 'pointer', color: '#DDD' }}>Returns & Refund Centre</span>
             <span style={{ fontSize: '0.85rem', cursor: 'pointer', color: '#DDD' }}>24x7 Student Helpdesk</span>
           </div>
         </div>
@@ -133,8 +138,8 @@ export default function Footer() {
         <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', flexWrap: 'wrap', marginBottom: '8px' }}>
           <span style={{ cursor: 'pointer' }}>Conditions of Use & Sale</span>
           <span style={{ cursor: 'pointer' }}>Privacy Notice</span>
-          <span style={{ cursor: 'pointer' }}>Interest-Based Ads</span>
-          <Link to="/admin/verify-students" style={{ color: '#38BDF8', textDecoration: 'none' }}>Admin Verification Portal</Link>
+          <Link to="/admin/dashboard" style={{ color: '#38BDF8', textDecoration: 'none' }}>Admin Operations Hub</Link>
+          <Link to="/admin/verify-students" style={{ color: '#93C5FD', textDecoration: 'none' }}>Verify Students</Link>
         </div>
         <div>© 2026 NEXO.in, Inc. or its affiliates. All rights reserved. Built for College Students across India.</div>
       </div>
