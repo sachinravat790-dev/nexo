@@ -137,6 +137,7 @@ export default function CartDrawer() {
                   {/* Details */}
                   <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                     <div>
+                      {/* 👈 YAHAN HAI CHANGE: item.title || item.name */}
                       <h4 style={{ fontSize: '0.85rem', fontWeight: '700', color: '#0F172A', margin: 0, lineHeight: '1.3' }}>
                         {item.title || item.name}
                       </h4>
